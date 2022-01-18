@@ -32,7 +32,7 @@ bw.printBinaryData(devData, 0xB600)
 #Write data into the device, do a hardware reset (put in bootstrap mode) before this opération.
 #Write data represented byfilepath.s19 file into the device and put 0x0F on config register.
 #For eprom write a 12V must be present on correct pin(see device datasheet).
-devData = device.writeMemoryFromS19('filepath.s19',0x0F)
+device.writeMemoryFromS19('filepath.s19',0x0F)
 
 
 binData = [0xAB,0xFF,0x10,0x25]
