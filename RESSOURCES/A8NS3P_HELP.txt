@@ -1,0 +1,115 @@
+2.00: BootLoaders.
+===================
+  This program must be downloaded into the RAM of the microcontroller before any
+operations on the latter. For microcontrollers with 256 bytes
+of RAM, the program is launched as soon as the 256th byte is received.
+For those with more memory space, the launch is performed if
+reception ceases. Therefore, it is possible to load a more BootLoader
+important and more complete (Ex: 68HC11F1, 68HC11E1 ...).
+  The BootLoader A8NS3E is compatible with all types of microcontrollers, but
+only allows programming of the CONFIG register, and of the EEPROM.
+The A8NS3P BootLoader is used to program the EPROM of 711E9 microcontrollers,
+and 711L6, but does not provide access to the EEPROM routines.
+  The new version of BootLoader A8NS3x eliminates the problem of waiting for
+end of programming of a byte. Indeed, as soon as the byte is written, the
+program returns the value (Acknowledge).
+  Communication speed has been increased. Loading is carried out
+still at 1200 Bauds, but then the program communicates at 9600 Bauds.
+To program 512 bytes of EEPROM, it takes about 7 seconds.
+To program $ 3000 bytes of EPROM, it takes about 1 minute and 20 seconds.
+
+2.01: Basic BootLoader command (A8NS3E).
+------------------------------------------------
+There are 4 of them.
+
+  <L>: Reading of the CONFIG register and of the EEPROM. At first,
+the CONFIG register of the microcontroller is sent, followed by the x bytes that
+includes the EEPROM. Lastly, the status is sent, followed by a return
+cart ($ 0D). The status can have three values:
+
+                 <: No programming performed before reading.
+                 F: Programming fault before reading.
+                 >: Programming successful before reading.
+
+  If the operator receives '<' when reading the EEPROM, this indicates
+that he has not programmed the uC before reading it, and that the contents of the EEPROM
+can correspond to a previous programming.
+  If the operator receives 'F' when reading the EEPROM, this tells him
+that there was a problem while programming the uC.
+  If the operator receives '>' when reading the EEPROM, this confirms
+the good progress of the programming of the uC.
+
+  <R>: Checksum request for the contents of the EEPROM. This command makes
+calculate at uC the Modulo 16 Checksum of its data written in EEPROM, and it
+request to send them, followed by the status and a carriage return ($ 0D).
+It is thus possible to quickly verify the content of the EEPROM.
+
+  <S>: Checksum request for the BootLoader program. This command is
+used when loading the BootLoader, and allows you to check that the latter
+has been downloaded successfully. You can thus check the signature of the
+BootLoader present in RAM. Also followed by status and ($ 0D).
+The signature of this BootLoader is: $ 4D47.
+
+  <P>: Programming of the uC EEPROM. When ordering, the uC
+completely erases the EEPROM, and waits for the values ​​to be written to EEPROM.
+If the EEPROM contains 512 bytes, the 512 bytes must be sent to the CPU,
+even if the program in question does not do them ($ FF). If an error of
+programming occurs, the loop is interrupted, and the status 'F' followed by
+($ 0D) is sent to the PC. You should know that the value of the configuration register
+is transmitted to the uC with the BootLoader program. So if you want
+change the value of the CONFIG register, you must reload the BootLoader by
+taking care to modify the original value of this register on demand.
+
+IMPORTANT: If you modify the EEPROM presence indicator, it is
+desirable to reload the BootLoader corresponding to the new configuration.
+Likewise, the value of the CONFIG register being latched to the Reset of the uC, it
+You must therefore reload the BootLoader to confirm the modification.
+
+
+2.02: Basic BootLoader command (A8NS3P).
+------------------------------------------------
+There are 4 of them.
+
+  <L>: Reading of the CONFIG register and of the EPROM. At first,
+the CONFIG register of the microcontroller is sent, followed by the x bytes that
+includes EPROM. Last the status is sent, followed by a return
+cart ($ 0D). The status can have three values:
+
+                 <: No programming performed before reading.
+                 F: Programming fault before reading.
+                 >: Programming successful before reading.
+
+  If the operator receives '<' when reading the EPROM, this indicates
+that he has not programmed the uC before reading it, and that the contents of the EPROM
+can correspond to a previous programming.
+  If the operator receives 'F' when reading the EPROM, this tells him
+that there was a problem while programming the uC.
+  If the operator receives '>' when reading the EPROM, this confirms to him
+the good progress of the programming of the uC.
+
+  <R>: Checksum request for the contents of the EPROM. This command makes
+calculate at uC the Modulo 16 Checksum of its data written in EPROM, and it
+request to send them, followed by the status and a carriage return ($ 0D).
+We can thus quickly check the contents of the EPROM.
+
+  <S>: Checksum request for the BootLoader program. This command is
+used when loading the BootLoaderé and allows you to check that the latter
+has been successfully downloaded. You can thus verify the signature of the
+BootLoader present in RAM. Also followed by status and ($ 0D).
+The signature of this BootLoader is: $ 4B84.
+
+  <P>: Programming of the uC EPROM. During this command, the uC waits
+the values ​​to write in EPROM. If the EPROM contains $ 3000 bytes, you will need
+send the $ 3000 bytes to the uC, even if the program in question does not
+not ($ FF). If a programming error occurs, the loop is interrupted,
+and the status 'F' followed by ($ 0D) is sent to the PC. It is not possible to
+program the CONFIG register in this case. You will therefore have to modify this
+last when programming the EEPROM, with the BootLoader A8NS3E.
+
+  The programming time in EPROM of one byte is 2 to 4 ms. The constant
+TIMPRO is currently 3ms (600). Readjust if necessary.
+  Please do not omit the 100 ohm resistance between VPP voltage, and
+the XIRQ pin of the uC. The VPP voltage is between 11.75 and 12.75 V.
+
+IMPORTANT:
+  Avoid the presence of VPP on a CPU which does not have an EPROM !!!!

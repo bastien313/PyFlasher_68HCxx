@@ -1,0 +1,22 @@
+
+
+EELOAD1.BAS and EEPROGIX.BO1 allow programming of the E-series
+HC11 devices in addtion to the A-series devices. Following are
+the changes which were made to EELOAD.BAS and EEPROGIX.BOO:
+
+EELOAD1.BAS:
+Line 140 of EELOAD.BAS was changed to -
+         140 LOADER$="EEPROGIX.BO1"
+
+EEPROGIX.BO1:
+The following bytes were added to EEPROGIX.BOO following the
+leading FF (inbetween the leading FF and the first program byte):
+         86        LDAA #$00
+         00
+         B7        STAA $1035
+         10
+         35
+These bytes clear the block protect register in the E-series
+devices. In the A-series devices this register is reserved and
+has no affect on the part.
+
