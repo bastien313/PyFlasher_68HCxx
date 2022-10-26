@@ -3,7 +3,7 @@ import binView as bw
 import S19 as s19
 
 #device creation
-device = hc.M68HC11E1('COM8')
+device = hc.M68HC811E2('COM24')
 
 print('    ********************************************')
 print('    *         Modern 68HCXX programmer         *')
@@ -25,6 +25,22 @@ while 1:
     elif command == 'readS19':#Print binary data from s19 file.
         fileName = input("Enter file name:  ")
         bw.printBinaryS19(fileName) #Print binary data on terminal.
+
+    elif command == 'bootEE':#Send EEprom bootloader
+        input("Make reset and press ENTER")
+        bootloaderData = open(device.writeEEPromBootloader,'rb').read()
+        bootloaderData = list(bootloaderData)
+        print(type(bootloaderData))
+        print(len(bootloaderData))
+        endAddress = (0xF800 + 100) -1
+        bootloaderData[2] = device.p_prom 
+        bootloaderData[3] = 0xFF#CONFIG register
+        bootloaderData[4] = (0xF800 & 0xFF00) >> 8
+        bootloaderData[5] =  0xF800 & 0x00FF
+        bootloaderData[6] = (endAddress & 0xFF00) >> 8
+        bootloaderData[7] =  endAddress & 0x00FF
+        device.uploadBootloader(bootloaderData)
+
         
     elif command == 'read':#Read data from device and print on terminal.
         #Get iformation from user.
@@ -35,6 +51,7 @@ while 1:
         
         devData = device.readMemory(address, size, config) #Read data from device.
         bw.printBinaryData(devData, address)#Print binary data on terminal.
+
         
     elif command == 'write':#Write data into device from S19 file.
         fileName = input("Enter file name:  ")

@@ -82,12 +82,16 @@ class MC68HCXX:
     def uploadBootloader(self, binaryData):
         """ Send bootloader to the device with binary data.
             An hardware device reset must be done before calling this function.
-            binaryData: file path of binary file.
+            binaryData: 
         """
         binaryData = list(binaryData)
+        while(len(binaryData) < 256):
+        # Fill bootloader data with 0xFF to reach a bootloader size of 256.
+        # Fix for microcontroller have 256 byte in ram, they wait exactly 256 byte for bootlader.
+            binaryData.append(0xFF) 
         self.__serialClose()
         try:
-            self.__serialOpen(1200)
+            self.__serialOpen(1200, 10)
         except:
             print('Unable to open {}'.format(self.comPortStr))
      
@@ -155,6 +159,7 @@ class MC68HCXX:
         bootloaderData[5] =  startAddress & 0x00FF
         bootloaderData[6] = (endAddress & 0xFF00) >> 8
         bootloaderData[7] =  endAddress & 0x00FF
+        
         
         #Write bootLoader
         self.uploadBootloader(bootloaderData)
