@@ -51,7 +51,7 @@ class MC68HCXX:
         self.writeEEPromBootloader = 'bootLoader\A8NS3E.TSK'#Bootloader for read/write eeprom
         self.p_prom = 3
        
-    def __serialOpen(self, speed, timeOut = None):
+    def _serialOpen(self, speed, timeOut = None):
         """
         Open serial port.
         Raise SerialException if an error occur.
@@ -62,7 +62,7 @@ class MC68HCXX:
             self.serialPort = 0
             raise SerialException
 
-    def __serialClose(self):
+    def _serialClose(self):
         """
         Close serial port.
         """
@@ -85,15 +85,12 @@ class MC68HCXX:
             binaryData: 
         """
         binaryData = list(binaryData)
-        while(len(binaryData) < 256):
-        # Fill bootloader data with 0xFF to reach a bootloader size of 256.
-        # Fix for microcontroller have 256 byte in ram, they wait exactly 256 byte for bootlader.
-            binaryData.append(0xFF) 
-        self.__serialClose()
+        self._serialClose()
         try:
-            self.__serialOpen(1200, 10)
+            self._serialOpen(1200, 10)
         except:
             print('Unable to open {}'.format(self.comPortStr))
+            self._serialClose()
      
         else:
             print('Open OK')
@@ -111,6 +108,7 @@ class MC68HCXX:
                 print('Bootloader OK')
             else:
                 print('Error bootloader')
+                self._serialClose()
         
     def writeEProm(self, data, startAddress, size):
         """
@@ -163,12 +161,12 @@ class MC68HCXX:
         
         #Write bootLoader
         self.uploadBootloader(bootloaderData)
-        self.__serialClose()
+        self._serialClose()
         try:
-            self.__serialOpen(9600)
+            self._serialOpen(9600)
         except:
             print('Unable to open {}'.format(self.comPortStr))
-            self.__serialClose()
+            self._serialClose()
             return 0
      
         else:
@@ -194,12 +192,12 @@ class MC68HCXX:
                 resp = self.serialPort.read(1)[0] #Read response from device.
                 if intVal != resp: #Check validity of byte.
                     print('Error on {:04X}, write {:02X} != read {:02X}'.format(actualAddress ,intVal , resp))
-                    self.__serialClose()
+                    self._serialClose()
                     return 0
                 actualAddress +=1
             print('')
             print('Write succes :)')
-            self.__serialClose()
+            self._serialClose()
             return 1
             
     def writeEEPromFromS19(self, s19FileName, configRegister = 0x0F):
@@ -269,9 +267,9 @@ class MC68HCXX:
         
         #Write bootLoader
         self.uploadBootloader(bootloaderData)
-        self.__serialClose()
+        self._serialClose()
         try:
-            self.__serialOpen(9600,(((endAddress-startAddress)/9600) * 10)+3)
+            self._serialOpen(9600,(((endAddress-startAddress)/9600) * 10)+3)
         except:
             print('Unable to open {}'.format(self.comPortStr))
             return 0
@@ -348,14 +346,14 @@ class M68HC711E9(MC68HCXX):
                 if echo != dataVerify:
                     for nb in range(0,nbDataToSend):
                         print('Error on {:04X}, write {:02X} != read {:02X}'.format(startAddress + (idData - ( 1-nb)) - 1 ,dataVerify[1-nb] , echo[1-nb]))
-                    self.__serialClose()
+                    self._serialClose()
                     print('Write abort')
                     return 0
         else:
-            self.__serialClose()
+            self._serialClose()
             print('Device busy?')
             return 0
-        self.__serialClose()
+        self._serialClose()
         print('')
         print('Write succes :)')
                 
@@ -384,6 +382,41 @@ class M68HC811E2(MC68HCXX):
         MC68HCXX.__init__(self, comPort)
         self.eepromStart = 0xF800
         self.eepromEnd = 0xFFFF
+        
+    def uploadBootloader(self, binaryData):
+        """ Send bootloader to the device with binary data.
+            An hardware device reset must be done before calling this function.
+            binaryData: 
+        """
+        binaryData = list(binaryData)
+        while(len(binaryData) < 256):
+        # Fill bootloader data with 0xFF to reach a bootloader size of 256.
+        # Fix for microcontroller have 256 byte in ram, they wait exactly 256 byte for bootlader.
+            binaryData.append(0xFF) 
+        self._serialClose()
+        try:
+            self._serialOpen(1200, 10)
+        except:
+            print('Unable to open {}'.format(self.comPortStr))
+            self._serialClose()
+     
+        else:
+            print('Open OK')
+            self.serialPort.write(0xFF.to_bytes(1, 'big'))
+            #self.serialPort.write(binaryData)
+            for data in binaryData:
+                self.serialPort.write(data.to_bytes(1, 'big'))
+            print('Bootloader send')
+            bw.printBinaryData(binaryData)
+            echo = list(self.serialPort.read(len(binaryData)-1))
+            print('Bootloader echo')
+            bw.printBinaryData(echo)
+            
+            if echo == binaryData[:-1] :
+                print('Bootloader OK')
+            else:
+                print('Error bootloader')
+                self._serialClose()
        
 class M68HC711L6(MC68HCXX):
     def __init__(self,comPort):
